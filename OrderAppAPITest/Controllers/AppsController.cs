@@ -82,14 +82,34 @@ namespace OrderAppAPITest.Controllers
                 return resulterr;
             }
         }
-        [Route("getFood")]
+        [Route("getFoodOnMorning")]
         [AcceptVerbs("GET")]
-        public String getFood()
+        public String getFoodOnMorning()
         {
             List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
             List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
             Dictionary<string, string> row = new Dictionary<string, string>();
-            string SqlQuery = "SELECT * FROM dbo.Food (NOLOCK)";
+            string SqlQuery = "SELECT * FROM dbo.Food (NOLOCK) WHERE is_Morning = 1 OR is_Morning IS NULL";
+            rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                foreach (var res in rows)
+                {
+                    result.Add(res);
+                }
+            }
+            Debug.WriteLine("rs=" + Newtonsoft.Json.JsonConvert.SerializeObject(result));
+            var jsonResult = new { result = result };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
+        }
+        [Route("getFoodOnAfternoon")]
+        [AcceptVerbs("GET")]
+        public String getFoodOnAfternoon()
+        {
+            List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+            Dictionary<string, string> row = new Dictionary<string, string>();
+            string SqlQuery = "SELECT * FROM dbo.Food (NOLOCK) WHERE is_Morning = 0 OR is_Morning IS NULL ORDER BY id DESC";
             rows = ConnectionDB.SqlSelectString(SqlQuery, row);
             if (rows.Count > 0)
             {

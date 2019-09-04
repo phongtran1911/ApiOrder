@@ -26,15 +26,46 @@ namespace OrderAppAPITest.Controllers
             try
             {
                 int idOrder = 0;
+                string idBowlType = "", totalBowl = "0";
+                string idDrink = "", totalDrink = "0";
+                string idFoodAdd = "", totalFoodAdd = "0";
                 foreach (var list in jObject)
                 {
+                    idBowlType = ""; idDrink = ""; idFoodAdd = "";
+                    totalBowl = "0"; totalDrink = "0"; totalFoodAdd = "0";
                     String idFood = list.Value["listFoodID"].ToString();
                     String idFoodType = list.Value["listFoodTypeID"].ToString();
                     String idFoodExcept = list.Value["listFoodExceptID"] == null ? "" : list.Value["listFoodExceptID"].ToString();
-                    JObject BowlType = JObject.Parse(list.Value["listBowlTypeID"].ToString());
-                    JObject BowlType0 = JObject.Parse(BowlType["0"].ToString());
-                    String idBowlType = BowlType0["id"].ToString();
-                    String total = BowlType0["total"].ToString();
+                    if (list.Value["listBowlTypeID"].ToString() != "")
+                    {
+                        JObject BowlType = JObject.Parse(list.Value["listBowlTypeID"].ToString());
+                        if (BowlType.Count > 0)
+                        {
+                            JObject BowlType0 = JObject.Parse(BowlType["0"].ToString());
+                            idBowlType = BowlType0["id"].ToString();
+                            totalBowl = BowlType0["total"].ToString();
+                        }
+                    }
+                    if (list.Value["listDrinkID"].ToString() != "")
+                    {
+                        JObject Drink = JObject.Parse(list.Value["listDrinkID"].ToString());
+                        if (Drink.Count > 0)
+                        {
+                            JObject Drink0 = JObject.Parse(Drink["0"].ToString());
+                            idDrink = Drink0["id"].ToString();
+                            totalDrink = Drink0["total"].ToString();
+                        }
+                    }
+                    if (list.Value["listFoodAddID"].ToString() != "")
+                    {
+                        JObject FoodAdd = JObject.Parse(list.Value["listFoodAddID"].ToString());
+                        if (FoodAdd.Count > 0)
+                        {
+                            JObject FoodAdd0 = JObject.Parse(FoodAdd["0"].ToString());
+                            idFoodAdd = FoodAdd0["id"].ToString();
+                            totalFoodAdd = FoodAdd0["total"].ToString();
+                        }
+                    }
                     String quantityFood = list.Value["quantityFood"].ToString();
                     String idTable = list.Value["idTable"].ToString();
                     String note = list.Value["note"].ToString();
@@ -44,7 +75,7 @@ namespace OrderAppAPITest.Controllers
                     row.Add("id", idOrder);
                     String SqlQuery = "select * from dbo.[Order] (nolock) where id = @id";
                     rows = ConnectionDB.SqlSelect(SqlQuery, row);
-                    if(rows.Count == 0)
+                    if (rows.Count == 0)
                     {
                         SqlQuery = "INSERT INTO dbo.[Order] (id_User,id_Delivery,createDate) VALUES(" + int.Parse(user_id) + ",1,GETDATE()); SELECT SCOPE_IDENTITY()";
                         idOrder = ConnectionDB.SqlInsertGetID(SqlQuery);
@@ -56,18 +87,20 @@ namespace OrderAppAPITest.Controllers
                     row.Add("idFoodType", idFoodType);
                     row.Add("idFoodExcept", idFoodExcept);
                     row.Add("idBowlType", int.Parse(idBowlType));
-                    row.Add("Total_order_price", decimal.Parse(total));
+                    row.Add("idDrink", idDrink);
+                    row.Add("idAddFoodType", idFoodAdd);
+                    row.Add("Total_order_price", (decimal.Parse(totalBowl) + decimal.Parse(totalDrink) + decimal.Parse(totalFoodAdd)) * int.Parse(quantityFood));
                     row.Add("Quantity", int.Parse(quantityFood));
                     row.Add("Note", note);
                     row.Add("is_TakeAway", is_TakeAway);
                     bool insert = ConnectionDB.SqlInsert("OrderDetails", row);
-                    if(insert == false)
+                    if (insert == false)
                     {
                         return resulterr;
                     }
                 }
             }
-            catch (Exception e) {}
+            catch (Exception e) { }
 
             return result;
 
