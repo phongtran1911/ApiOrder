@@ -295,5 +295,64 @@ namespace OrderAppAPITest.Models
                 return false;
             }
         }
+        public static string CreateInsertSqlGetID(string table,
+                                      IDictionary<string, Object> parameterMap)
+        {
+            var keys = parameterMap.Keys.ToList();
+            // ToList() LINQ extension method used because order is NOT
+            // guaranteed with every implementation of IDictionary<TKey, TValue>
+
+            var sql = new StringBuilder("INSERT INTO ").Append(table).Append("(");
+
+            for (var i = 0; i < keys.Count; i++)
+            {
+                sql.Append(keys[i]);
+                if (i < keys.Count - 1)
+                    sql.Append(",");
+            }
+
+            sql.Append(") VALUES(");
+
+            for (var i = 0; i < keys.Count; i++)
+            {
+                sql.Append('@' + keys[i]);
+                if (i < keys.Count - 1)
+                    sql.Append(", ");
+            }
+            return sql.Append("); SELECT SCOPE_IDENTITY()").ToString();
+        }
+        public static int SqlInsertGetID(string table, IDictionary<string, Object> parameterMap)
+        {
+            int user_id = 0;
+            var connectionString = connString;
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+
+                    connection.Open();
+
+                    //
+
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.Connection = connection;
+                        command.CommandText = CreateInsertSqlGetID(table, parameterMap);
+
+                        foreach (var pair in parameterMap)
+                        {
+                            command.Parameters.AddWithValue(pair.Key, pair.Value);
+                        }
+                        user_id = Convert.ToInt32(command.ExecuteScalar());
+                    }
+                }
+                return user_id;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("Exception=" + e.ToString());
+                return 0;
+            }
+        }
     }
 }

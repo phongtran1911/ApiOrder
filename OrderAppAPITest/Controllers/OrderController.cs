@@ -34,8 +34,6 @@ namespace OrderAppAPITest.Controllers
                     idBowlType = ""; idDrink = ""; idFoodAdd = "";
                     totalBowl = "0"; totalDrink = "0"; totalFoodAdd = "0";
                     String idFood = list.Value["listFoodID"].ToString();
-                    String idFoodType = list.Value["listFoodTypeID"].ToString();
-                    String idFoodExcept = list.Value["listFoodExceptID"] == null ? "" : list.Value["listFoodExceptID"].ToString();
                     if (list.Value["listBowlTypeID"].ToString() != "")
                     {
                         JObject BowlType = JObject.Parse(list.Value["listBowlTypeID"].ToString());
@@ -84,19 +82,52 @@ namespace OrderAppAPITest.Controllers
                     row.Add("idOrder", idOrder);
                     row.Add("idTable", int.Parse(idTable));
                     row.Add("idFood", int.Parse(idFood));
-                    row.Add("idFoodType", idFoodType);
-                    row.Add("idFoodExcept", idFoodExcept);
-                    row.Add("idBowlType", int.Parse(idBowlType));
+                    if(idBowlType != "")
+                    {
+                        row.Add("idBowlType", int.Parse(idBowlType));
+                    }                    
                     row.Add("idDrink", idDrink);
                     row.Add("idAddFoodType", idFoodAdd);
                     row.Add("Total_order_price", (decimal.Parse(totalBowl) + decimal.Parse(totalDrink) + decimal.Parse(totalFoodAdd)) * int.Parse(quantityFood));
                     row.Add("Quantity", int.Parse(quantityFood));
                     row.Add("Note", note);
                     row.Add("is_TakeAway", is_TakeAway);
-                    bool insert = ConnectionDB.SqlInsert("OrderDetails", row);
-                    if (insert == false)
+                    int insert = ConnectionDB.SqlInsertGetID("OrderDetails", row);
+                    if (insert == 0)
                     {
                         return resulterr;
+                    }
+                    if(list.Value["listFoodTypeID"].ToString() != "")
+                    {
+                        JObject FoodType = JObject.Parse(list.Value["listFoodTypeID"].ToString());
+                        foreach(var listFT in FoodType)
+                        {
+                            string idFT = listFT.Value["id"].ToString();
+                            row.Clear();
+                            try
+                            {
+                                row.Add("idFoodType", idFT);
+                                row.Add("idOrderDetail", insert);
+                                ConnectionDB.SqlInsert("Type_OrderDetail", row);
+                            }
+                            catch (Exception e) { }                            
+                        }
+                    }
+                    if (list.Value["listFoodExceptID"].ToString() != "")
+                    {
+                        JObject FoodExcept = JObject.Parse(list.Value["listFoodExceptID"].ToString());
+                        foreach (var listFE in FoodExcept)
+                        {
+                            string idFE = listFE.Value["id"].ToString();
+                            row.Clear();
+                            try
+                            {
+                                row.Add("idFoodExcept", idFE);
+                                row.Add("idOrderDetail", insert);
+                                ConnectionDB.SqlInsert("Except_OrderDetail", row);
+                            }
+                            catch (Exception e) { }
+                        }
                     }
                 }
             }
