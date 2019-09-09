@@ -163,14 +163,15 @@ namespace OrderAppAPITest.Controllers
             var jsonResult = new { result = result };
             return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
         }
-        [Route("getFoodExcept")]
+        [Route("getFoodExcept/{is_morning}")]
         [AcceptVerbs("GET")]
-        public String getFoodExcept()
+        public String getFoodExcept(string is_morning)
         {
+            //bool morning = bool.Parse(is_morning);
             List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
             List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
             Dictionary<string, string> row = new Dictionary<string, string>();
-            string SqlQuery = "SELECT * FROM dbo.Food_Except (NOLOCK)";
+            string SqlQuery = "SELECT * FROM dbo.Food_Except (NOLOCK) where is_Morning = " + is_morning;
             rows = ConnectionDB.SqlSelectString(SqlQuery, row);
             if (rows.Count > 0)
             {

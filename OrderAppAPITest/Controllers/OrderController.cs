@@ -88,16 +88,17 @@ namespace OrderAppAPITest.Controllers
                     }                    
                     row.Add("idDrink", idDrink);
                     row.Add("idAddFoodType", idFoodAdd);
-                    row.Add("Total_order_price", (decimal.Parse(totalBowl) + decimal.Parse(totalDrink) + decimal.Parse(totalFoodAdd)) * int.Parse(quantityFood));
+                    row.Add("Total_order_price", int.Parse(idFood) < 7 ? (decimal.Parse(totalBowl) + decimal.Parse(totalDrink) + decimal.Parse(totalFoodAdd)) * int.Parse(quantityFood) : 30000 * int.Parse(quantityFood));
                     row.Add("Quantity", int.Parse(quantityFood));
                     row.Add("Note", note);
                     row.Add("is_TakeAway", is_TakeAway);
+                    row.Add("idDelivery", 1);
                     int insert = ConnectionDB.SqlInsertGetID("OrderDetails", row);
                     if (insert == 0)
                     {
                         return resulterr;
                     }
-                    if(list.Value["listFoodTypeID"].ToString() != "")
+                    if(list.Value["listFoodTypeID"].ToString() != "" && list.Value["listFoodTypeID"].ToString().Length > 2)
                     {
                         JObject FoodType = JObject.Parse(list.Value["listFoodTypeID"].ToString());
                         foreach(var listFT in FoodType)
@@ -113,7 +114,7 @@ namespace OrderAppAPITest.Controllers
                             catch (Exception e) { }                            
                         }
                     }
-                    if (list.Value["listFoodExceptID"].ToString() != "")
+                    if (list.Value["listFoodExceptID"].ToString() != "" && list.Value["listFoodExceptID"].ToString().Length > 2)
                     {
                         JObject FoodExcept = JObject.Parse(list.Value["listFoodExceptID"].ToString());
                         foreach (var listFE in FoodExcept)
@@ -135,6 +136,149 @@ namespace OrderAppAPITest.Controllers
 
             return result;
 
+        }
+
+        [Route("getListOrdered")]
+        [AcceptVerbs("GET")]
+        public string getListOrdered()
+        {
+            List<Dictionary<string, object>> lst = new List<Dictionary<string, object>>();
+            List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+            Dictionary<string, object> row = new Dictionary<string, object>();
+            string LoaiMon = "", KhongLay = "", Mon = "", LoaiTo = "", MonThem = "", Nuoc = "", SoLuong = "", Tien = "", GhiChu = "", NguoiDat = "", Ban = "", createDate = "", id = "", status = "",MangVe = "";
+            string sqlQuery = "SELECT c.id,d.Name AS Ban,e.Name AS Mon,bt.Name AS LoaiTo,t.Name AS MonThem, dr.Name AS Nuoc,c.Quantity AS SoLuong,c.Total_order_price AS Tien,c.Note AS GhiChu,b.Fullname AS NguoiDat,ft.Name AS LoaiMon, fe.Name AS KhongLay,ds.Description AS TrangThai,CASE WHEN c.is_TakeAway = 1 THEN N'Mang Về' ELSE N'Tại Bàn' END MangVe, CONVERT(NVARCHAR(10),a.createDate,103) + RIGHT(CONVERT(VARCHAR, a.createDate, 0), 7) createDate" +
+                    " FROM dbo.[Order] (NOLOCK) a LEFT JOIN dbo.Users (NOLOCK) b ON b.id = a.id_User LEFT JOIN dbo.OrderDetails (NOLOCK) c ON c.idOrder = a.id LEFT JOIN dbo.Food_Table (NOLOCK) d ON d.id = c.idTable LEFT JOIN dbo.Food (NOLOCK) e ON e.id = c.idFood" +
+                    " LEFT JOIN dbo.Food_Add_Type (NOLOCK) t ON t.id = c.idAddFoodType LEFT JOIN dbo.Drink (NOLOCK) dr ON dr.id = c.idDrink LEFT JOIN dbo.Bowl_Type (NOLOCK) bt ON bt.id = c.idBowlType LEFT JOIN dbo.Type_OrderDetail (NOLOCK) tod ON tod.idOrderDetail = c.id" +
+                    " LEFT JOIN dbo.Food_Type (NOLOCK) ft ON ft.id = tod.idFoodType LEFT JOIN dbo.Except_OrderDetail (NOLOCK) eod ON eod.idOrderDetail = c.id LEFT JOIN dbo.Food_Except (NOLOCK) fe ON fe.id = eod.idFoodExcept LEFT JOIN dbo.Delivery_status (NOLOCK) ds ON ds.id = c.idDelivery WHERE c.idDelivery IN (1,2) ORDER BY a.createDate DESC";
+            rows = ConnectionDB.SqlSelect(sqlQuery, row);
+            if(rows.Count > 0)
+            {
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    if(rows.Count - i > 1)
+                    {
+                        LoaiMon = rows[i]["LoaiMon"] == null ? "" : rows[i]["LoaiMon"].ToString();
+                        KhongLay = rows[i]["KhongLay"] == null ? "" : rows[i]["KhongLay"].ToString();
+                        if (rows[i]["id"].ToString() == rows[i + 1]["id"].ToString())
+                        {
+                            for (int y = i; y < rows.Count; y++)
+                            {
+                                if (rows[y]["id"].ToString() == rows[y + 1]["id"].ToString())
+                                {
+                                    if(rows[y]["LoaiMon"].ToString() != rows[y + 1]["LoaiMon"].ToString())
+                                    {
+                                        LoaiMon += "," + rows[y + 1]["LoaiMon"].ToString();
+                                    }                                  
+                                    if(rows[y]["KhongLay"].ToString() != rows[y + 1]["KhongLay"].ToString())
+                                    {
+                                        KhongLay += "," + rows[y + 1]["KhongLay"].ToString();
+                                    }                                    
+                                    i++;
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                            }
+                        }
+                        Mon = rows[i]["Mon"].ToString();
+                        LoaiTo = rows[i]["LoaiTo"] == null ? "" : rows[i]["LoaiTo"].ToString();
+                        MonThem = rows[i]["MonThem"] == null ? "" : rows[i]["MonThem"].ToString();
+                        Nuoc = rows[i]["Nuoc"] == null ? "" : rows[i]["Nuoc"].ToString();
+                        SoLuong = rows[i]["SoLuong"] == null ? "0" : rows[i]["SoLuong"].ToString();
+                        Tien = rows[i]["Tien"] == null ? "0" : rows[i]["Tien"].ToString();
+                        GhiChu = rows[i]["GhiChu"] == null ? "" : rows[i]["GhiChu"].ToString();
+                        NguoiDat = rows[i]["NguoiDat"] == null ? "" : rows[i]["NguoiDat"].ToString();
+                        Ban = rows[i]["Ban"].ToString();
+                        id = rows[i]["id"].ToString();
+                        status = rows[i]["TrangThai"].ToString();
+                        MangVe = rows[i]["MangVe"].ToString();
+                        createDate = rows[i]["createDate"].ToString();
+                        Dictionary<string, object> dic = new Dictionary<string, object>();
+                        dic.Add("id", int.Parse(id));
+                        dic.Add("Mon", Mon);
+                        dic.Add("MonThem", MonThem);
+                        dic.Add("LoaiTo", LoaiTo);
+                        dic.Add("Nuoc", Nuoc);
+                        dic.Add("SoLuong", int.Parse(SoLuong));
+                        dic.Add("Tien", Decimal.Parse(Tien));
+                        dic.Add("GhiChu", GhiChu);
+                        dic.Add("NguoiDat", NguoiDat);
+                        dic.Add("Ban", Ban);
+                        dic.Add("NgayTao", createDate);
+                        dic.Add("LoaiMon", LoaiMon);
+                        dic.Add("KhongLay", KhongLay);
+                        dic.Add("TrangThai", status);
+                        dic.Add("MangVe", MangVe);
+                        lst.Add(dic);
+                    }
+                    else
+                    {
+                        LoaiMon = rows[i]["LoaiMon"] == null ? "" : rows[i]["LoaiMon"].ToString();
+                        KhongLay = rows[i]["KhongLay"] == null ? "" : rows[i]["KhongLay"].ToString();
+                        Mon = rows[i]["Mon"].ToString();
+                        LoaiTo = rows[i]["LoaiTo"] == null ? "" : rows[i]["LoaiTo"].ToString();
+                        MonThem = rows[i]["MonThem"] == null ? "" : rows[i]["MonThem"].ToString();
+                        Nuoc = rows[i]["Nuoc"] == null ? "" : rows[i]["Nuoc"].ToString();
+                        SoLuong = rows[i]["SoLuong"] == null ? "0" : rows[i]["SoLuong"].ToString();
+                        Tien = rows[i]["Tien"] == null ? "0" : rows[i]["Tien"].ToString();
+                        GhiChu = rows[i]["GhiChu"] == null ? "" : rows[i]["GhiChu"].ToString();
+                        NguoiDat = rows[i]["NguoiDat"] == null ? "" : rows[i]["NguoiDat"].ToString();
+                        Ban = rows[i]["Ban"].ToString();
+                        id = rows[i]["id"].ToString();
+                        status = rows[i]["TrangThai"].ToString();
+                        MangVe = rows[i]["MangVe"].ToString();
+                        createDate = rows[i]["createDate"].ToString();
+                        Dictionary<string, object> dic = new Dictionary<string, object>();
+                        dic.Add("id", int.Parse(id));
+                        dic.Add("Mon", Mon);
+                        dic.Add("MonThem", MonThem);
+                        dic.Add("LoaiTo", LoaiTo);
+                        dic.Add("Nuoc", Nuoc);
+                        dic.Add("SoLuong", int.Parse(SoLuong));
+                        dic.Add("Tien", Decimal.Parse(Tien));
+                        dic.Add("GhiChu", GhiChu);
+                        dic.Add("NguoiDat", NguoiDat);
+                        dic.Add("Ban", Ban);
+                        dic.Add("NgayTao", createDate);
+                        dic.Add("LoaiMon", LoaiMon);
+                        dic.Add("KhongLay", KhongLay);
+                        dic.Add("TrangThai", status);
+                        dic.Add("MangVe", MangVe);
+                        lst.Add(dic);
+                    }
+                }
+            }
+            else
+            {
+                var resulterr = new { status = "Empty", list = "" };
+                return Newtonsoft.Json.JsonConvert.SerializeObject(resulterr);
+            }
+            var result = new { status = "success", list = lst };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(result);
+        }
+
+        [Route("postUpdateStatusOrder/{id_OrderDetail}")]
+        [AcceptVerbs("POST")]
+        public string postUpdateStatusOrder(string id_OrderDetail)
+        {
+            string result = "";
+            try
+            {
+                result = "{" + "\"status\":" + "\"success\"" + "}";
+                Dictionary<String, Object> dic = new Dictionary<String, Object>();
+                dic.Add("idDelivery", 2);
+                bool update = ConnectionDB.SqlUpdate("OrderDetails", dic, Int32.Parse(id_OrderDetail));
+                if (!update)
+                {
+                    result = "{" + "\"status\":" + "\"fail\"" + "}";
+                }
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
+            return result;
         }
     }
 }
