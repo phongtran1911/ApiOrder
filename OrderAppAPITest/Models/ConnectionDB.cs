@@ -354,5 +354,94 @@ namespace OrderAppAPITest.Models
                 return 0;
             }
         }
+        private static string CreateUpdateParamSql(string table,
+                                IDictionary<string, Object> parameterMap, int id,string nameParam)
+        {
+            var keys = parameterMap.Keys.ToList();
+            // ToList() LINQ extension method used because order is NOT
+            // guaranteed with every implementation of IDictionary<TKey, TValue>
+
+            var sql = new StringBuilder("UPDATE ").Append(table).Append(" SET ");
+
+            for (var i = 0; i < keys.Count; i++)
+            {
+                sql.Append(keys[i]);
+                sql.Append("=");
+                sql.Append('@' + keys[i]);
+                if (i < keys.Count - 1)
+                    sql.Append(",");
+            }
+            sql.Append(" WHERE " + nameParam + "=" + id);
+            return sql.ToString();
+        }
+        public static bool SqlUpdate(string table, IDictionary<string, Object> parameterMap, int id, string nameParam)
+        {
+            Debug.WriteLine("current date=" + DateTime.Now.ToString());
+            var connectionString = connString;
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+
+                    connection.Open();
+
+                    //
+
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.Connection = connection;
+                        command.CommandText = CreateUpdateParamSql(table, parameterMap, id, nameParam);
+                        command.CommandTimeout = 180;
+                        foreach (var pair in parameterMap)
+                        {
+                            command.Parameters.AddWithValue(pair.Key, pair.Value);
+                        }
+                        Debug.WriteLine(command.CommandText.ToString());
+                        command.ExecuteNonQuery();
+                    }
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("Exception=" + e.ToString());
+                return false;
+            }
+        }
+        private static string CreateDeleteSql(string table, int id, string nameParam)
+        {
+            // ToList() LINQ extension method used because order is NOT
+            // guaranteed with every implementation of IDictionary<TKey, TValue>
+
+            var sql = new StringBuilder("DELETE ").Append(table);
+
+            sql.Append(" WHERE " + nameParam + "=" + id);
+            return sql.ToString();
+        }
+        public static bool SqlDelete(string table, int id, string nameParam)
+        {
+            var connectionString = connString;
+            try
+            {
+                using (var connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    //
+                    using (var command = connection.CreateCommand())
+                    {
+                        command.Connection = connection;
+                        command.CommandText = CreateDeleteSql(table, id, nameParam);
+                        command.CommandTimeout = 180;
+                        command.ExecuteNonQuery();
+                    }
+                }
+                return true;
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine("Exception=" + e.ToString());
+                return false;
+            }
+        }
     }
 }

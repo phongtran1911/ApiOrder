@@ -454,5 +454,82 @@ namespace OrderAppAPITest.Controllers
         }
 
         //End
+        [Route("getMorningRevenueInDay")]
+        [AcceptVerbs("GET")]
+        public String getMorningRevenueInDay()
+        {
+            List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+            Dictionary<string, string> row = new Dictionary<string, string>();
+            string SqlQuery = "SELECT CASE WHEN SUM(b.Total_order_price) IS NULL THEN 0 ELSE SUM(b.Total_order_price) END Total FROM dbo.[Order] (NOLOCK) a" +
+                " LEFT JOIN dbo.OrderDetails (NOLOCK) b ON b.idOrder = a.id" +
+                " WHERE b.idFood < 6 AND CAST(a.createDate AS DATE) = CAST(GETDATE() AS DATE) AND b.idDelivery = 2";
+            rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                result.Add(rows[0]);
+            }
+            Debug.WriteLine("rs=" + Newtonsoft.Json.JsonConvert.SerializeObject(result));
+            var jsonResult = new { result = result };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
+        }
+        [Route("getAfternoonRevenueInDay")]
+        [AcceptVerbs("GET")]
+        public String getAfternoonRevenueInDay()
+        {
+            List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+            Dictionary<string, string> row = new Dictionary<string, string>();
+            string SqlQuery = "SELECT CASE WHEN SUM(b.Total_order_price) IS NULL THEN 0 ELSE SUM(b.Total_order_price) END Total FROM dbo.[Order] (NOLOCK) a" +
+                " LEFT JOIN dbo.OrderDetails (NOLOCK) b ON b.idOrder = a.id" +
+                " WHERE b.idFood > 6 AND CAST(a.createDate AS DATE) = CAST(GETDATE() AS DATE) AND b.idDelivery = 2";
+            rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                result.Add(rows[0]);
+            }
+            Debug.WriteLine("rs=" + Newtonsoft.Json.JsonConvert.SerializeObject(result));
+            var jsonResult = new { result = result };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
+        }
+
+        [Route("getMorningRevenueInMonth")]
+        [AcceptVerbs("GET")]
+        public String getMorningRevenueInMonth()
+        {
+            List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+            Dictionary<string, string> row = new Dictionary<string, string>();
+            string SqlQuery = "SELECT CASE WHEN SUM(b.Total_order_price) IS NULL THEN 0 ELSE SUM(b.Total_order_price) END Total FROM dbo.[Order] (NOLOCK) a" +
+                " LEFT JOIN dbo.OrderDetails (NOLOCK) b ON b.idOrder = a.id" +
+                " WHERE b.idFood < 6 AND MONTH(a.createDate) = MONTH(GETDATE()) AND b.idDelivery = 2";
+            rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                result.Add(rows[0]);
+            }
+            Debug.WriteLine("rs=" + Newtonsoft.Json.JsonConvert.SerializeObject(result));
+            var jsonResult = new { result = result };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
+        }
+        [Route("getAfternoonRevenueInMonth")]
+        [AcceptVerbs("GET")]
+        public String getAfternoonRevenueInMonth()
+        {
+            List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+            Dictionary<string, string> row = new Dictionary<string, string>();
+            string SqlQuery = "SELECT CASE WHEN SUM(b.Total_order_price) IS NULL THEN 0 ELSE SUM(b.Total_order_price) END Total FROM dbo.[Order] (NOLOCK) a" +
+                " LEFT JOIN dbo.OrderDetails (NOLOCK) b ON b.idOrder = a.id" +
+                " WHERE b.idFood > 6 AND MONTH(a.createDate) = MONTH(GETDATE()) AND b.idDelivery = 2";
+            rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                result.Add(rows[0]);
+            }
+            Debug.WriteLine("rs=" + Newtonsoft.Json.JsonConvert.SerializeObject(result));
+            var jsonResult = new { result = result };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
+        }
     }
 }

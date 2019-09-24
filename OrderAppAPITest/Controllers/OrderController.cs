@@ -82,10 +82,10 @@ namespace OrderAppAPITest.Controllers
                     row.Add("idOrder", idOrder);
                     row.Add("idTable", int.Parse(idTable));
                     row.Add("idFood", int.Parse(idFood));
-                    if(idBowlType != "")
+                    if (idBowlType != "")
                     {
                         row.Add("idBowlType", int.Parse(idBowlType));
-                    }                    
+                    }
                     row.Add("idDrink", idDrink);
                     row.Add("idAddFoodType", idFoodAdd);
                     row.Add("Total_order_price", int.Parse(idFood) < 7 ? (decimal.Parse(totalBowl) + decimal.Parse(totalDrink) + decimal.Parse(totalFoodAdd)) * int.Parse(quantityFood) : 30000 * int.Parse(quantityFood));
@@ -98,10 +98,10 @@ namespace OrderAppAPITest.Controllers
                     {
                         return resulterr;
                     }
-                    if(list.Value["listFoodTypeID"].ToString() != "" && list.Value["listFoodTypeID"].ToString().Length > 2)
+                    if (list.Value["listFoodTypeID"].ToString() != "" && list.Value["listFoodTypeID"].ToString().Length > 2)
                     {
                         JObject FoodType = JObject.Parse(list.Value["listFoodTypeID"].ToString());
-                        foreach(var listFT in FoodType)
+                        foreach (var listFT in FoodType)
                         {
                             string idFT = listFT.Value["id"].ToString();
                             row.Clear();
@@ -111,7 +111,7 @@ namespace OrderAppAPITest.Controllers
                                 row.Add("idOrderDetail", insert);
                                 ConnectionDB.SqlInsert("Type_OrderDetail", row);
                             }
-                            catch (Exception e) { }                            
+                            catch (Exception e) { }
                         }
                     }
                     if (list.Value["listFoodExceptID"].ToString() != "" && list.Value["listFoodExceptID"].ToString().Length > 2)
@@ -145,34 +145,37 @@ namespace OrderAppAPITest.Controllers
             List<Dictionary<string, object>> lst = new List<Dictionary<string, object>>();
             List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
             Dictionary<string, object> row = new Dictionary<string, object>();
-            string LoaiMon = "", KhongLay = "", Mon = "", LoaiTo = "", MonThem = "", Nuoc = "", SoLuong = "", Tien = "", GhiChu = "", NguoiDat = "", Ban = "", createDate = "", id = "", status = "",MangVe = "";
-            string sqlQuery = "SELECT c.id,d.Name AS Ban,e.Name AS Mon,bt.Name AS LoaiTo,t.Name AS MonThem, dr.Name AS Nuoc,c.Quantity AS SoLuong,c.Total_order_price AS Tien,c.Note AS GhiChu,b.Fullname AS NguoiDat,ft.Name AS LoaiMon, fe.Name AS KhongLay,ds.Description AS TrangThai,CASE WHEN c.is_TakeAway = 1 THEN N'Mang Về' ELSE N'Tại Bàn' END MangVe, CONVERT(NVARCHAR(10),a.createDate,103) + RIGHT(CONVERT(VARCHAR, a.createDate, 0), 7) createDate" +
-                    " FROM dbo.[Order] (NOLOCK) a LEFT JOIN dbo.Users (NOLOCK) b ON b.id = a.id_User LEFT JOIN dbo.OrderDetails (NOLOCK) c ON c.idOrder = a.id LEFT JOIN dbo.Food_Table (NOLOCK) d ON d.id = c.idTable LEFT JOIN dbo.Food (NOLOCK) e ON e.id = c.idFood" +
+            string idOrder = "",idTable = "",idFood = "",LoaiMon = "", KhongLay = "", Mon = "", LoaiTo = "", MonThem = "", Nuoc = "", SoLuong = "", Tien = "", GhiChu = "", NguoiDat = "", Ban = "", createDate = "", id = "", status = "", MangVe = "", idDelivery = "";
+            string sqlQuery = "SELECT c.id,d.Name AS Ban,e.Name AS Mon,bt.Name AS LoaiTo,t.Name AS MonThem, dr.Name AS Nuoc,c.Quantity AS SoLuong,c.Total_order_price AS Tien,c.Note AS GhiChu,b.Fullname AS NguoiDat,ft.Name AS LoaiMon, fe.Name AS KhongLay,ds.Description AS TrangThai,CASE WHEN c.is_TakeAway = 1 THEN N'Mang Về' ELSE N'Tại Bàn' END MangVe, CONVERT(NVARCHAR(10),a.createDate,103) + RIGHT(CONVERT(VARCHAR, a.createDate, 0), 7) createDate,c.idDelivery, c.idFood" +
+                    ", c.idTable, a.id AS idOrder FROM dbo.[Order] (NOLOCK) a LEFT JOIN dbo.Users (NOLOCK) b ON b.id = a.id_User LEFT JOIN dbo.OrderDetails (NOLOCK) c ON c.idOrder = a.id LEFT JOIN dbo.Food_Table (NOLOCK) d ON d.id = c.idTable LEFT JOIN dbo.Food (NOLOCK) e ON e.id = c.idFood" +
                     " LEFT JOIN dbo.Food_Add_Type (NOLOCK) t ON t.id = c.idAddFoodType LEFT JOIN dbo.Drink (NOLOCK) dr ON dr.id = c.idDrink LEFT JOIN dbo.Bowl_Type (NOLOCK) bt ON bt.id = c.idBowlType LEFT JOIN dbo.Type_OrderDetail (NOLOCK) tod ON tod.idOrderDetail = c.id" +
-                    " LEFT JOIN dbo.Food_Type (NOLOCK) ft ON ft.id = tod.idFoodType LEFT JOIN dbo.Except_OrderDetail (NOLOCK) eod ON eod.idOrderDetail = c.id LEFT JOIN dbo.Food_Except (NOLOCK) fe ON fe.id = eod.idFoodExcept LEFT JOIN dbo.Delivery_status (NOLOCK) ds ON ds.id = c.idDelivery WHERE c.idDelivery IN (1,2) ORDER BY a.createDate DESC";
+                    " LEFT JOIN dbo.Food_Type (NOLOCK) ft ON ft.id = tod.idFoodType LEFT JOIN dbo.Except_OrderDetail (NOLOCK) eod ON eod.idOrderDetail = c.id LEFT JOIN dbo.Food_Except (NOLOCK) fe ON fe.id = eod.idFoodExcept LEFT JOIN dbo.Delivery_status (NOLOCK) ds ON ds.id = c.idDelivery WHERE c.idDelivery IN (1,2) ORDER BY a.createDate DESC,c.idDelivery ASC";
             rows = ConnectionDB.SqlSelect(sqlQuery, row);
-            if(rows.Count > 0)
+            if (rows.Count > 0)
             {
                 for (int i = 0; i < rows.Count; i++)
                 {
-                    if(rows.Count - i > 1)
+                    if (rows.Count - i > 1)
                     {
                         LoaiMon = rows[i]["LoaiMon"] == null ? "" : rows[i]["LoaiMon"].ToString();
                         KhongLay = rows[i]["KhongLay"] == null ? "" : rows[i]["KhongLay"].ToString();
+                        List<string> arrKhongLay = new List<string>();
+                        arrKhongLay.Add(KhongLay);
                         if (rows[i]["id"].ToString() == rows[i + 1]["id"].ToString())
                         {
                             for (int y = i; y < rows.Count; y++)
                             {
                                 if (rows[y]["id"].ToString() == rows[y + 1]["id"].ToString())
-                                {
-                                    if(rows[y]["LoaiMon"].ToString() != rows[y + 1]["LoaiMon"].ToString())
+                                {                                    
+                                    if (rows[y]["LoaiMon"].ToString() != rows[y + 1]["LoaiMon"].ToString())
                                     {
                                         LoaiMon += "," + rows[y + 1]["LoaiMon"].ToString();
-                                    }                                  
-                                    if(rows[y]["KhongLay"].ToString() != rows[y + 1]["KhongLay"].ToString())
+                                    }
+                                    if (rows[y]["KhongLay"].ToString() != rows[y + 1]["KhongLay"].ToString() && Array.IndexOf(arrKhongLay.ToArray(), rows[y + 1]["KhongLay"]) < 0)
                                     {
+                                        arrKhongLay.Add(rows[y + 1]["KhongLay"].ToString());
                                         KhongLay += "," + rows[y + 1]["KhongLay"].ToString();
-                                    }                                    
+                                    }
                                     i++;
                                 }
                                 else
@@ -194,6 +197,10 @@ namespace OrderAppAPITest.Controllers
                         status = rows[i]["TrangThai"].ToString();
                         MangVe = rows[i]["MangVe"].ToString();
                         createDate = rows[i]["createDate"].ToString();
+                        idDelivery = rows[i]["idDelivery"].ToString();
+                        idFood = rows[i]["idFood"].ToString();
+                        idTable = rows[i]["idTable"].ToString();
+                        idOrder = rows[i]["idOrder"].ToString();
                         Dictionary<string, object> dic = new Dictionary<string, object>();
                         dic.Add("id", int.Parse(id));
                         dic.Add("Mon", Mon);
@@ -210,6 +217,10 @@ namespace OrderAppAPITest.Controllers
                         dic.Add("KhongLay", KhongLay);
                         dic.Add("TrangThai", status);
                         dic.Add("MangVe", MangVe);
+                        dic.Add("idDelivery", idDelivery);
+                        dic.Add("idFood", idFood);
+                        dic.Add("idTable", idTable);
+                        dic.Add("idOrder", idOrder);
                         lst.Add(dic);
                     }
                     else
@@ -229,6 +240,10 @@ namespace OrderAppAPITest.Controllers
                         status = rows[i]["TrangThai"].ToString();
                         MangVe = rows[i]["MangVe"].ToString();
                         createDate = rows[i]["createDate"].ToString();
+                        idDelivery = rows[i]["idDelivery"].ToString();
+                        idFood = rows[i]["idFood"].ToString();
+                        idTable = rows[i]["idTable"].ToString();
+                        idOrder = rows[i]["idOrder"].ToString();
                         Dictionary<string, object> dic = new Dictionary<string, object>();
                         dic.Add("id", int.Parse(id));
                         dic.Add("Mon", Mon);
@@ -245,6 +260,10 @@ namespace OrderAppAPITest.Controllers
                         dic.Add("KhongLay", KhongLay);
                         dic.Add("TrangThai", status);
                         dic.Add("MangVe", MangVe);
+                        dic.Add("idDelivery", idDelivery);
+                        dic.Add("idFood", idFood);
+                        dic.Add("idTable", idTable);
+                        dic.Add("idOrder", idOrder);
                         lst.Add(dic);
                     }
                 }
@@ -278,6 +297,232 @@ namespace OrderAppAPITest.Controllers
             {
                 return e.Message;
             }
+            return result;
+        }
+        [Route("postUpdateOrderOnlyFood/{idOrderDetail}")]
+        [AcceptVerbs("POST")]
+        public String postUpdateOrderOnlyFood([FromBody] Object data, string idOrderDetail)
+        {
+            String resulterr = "{" + "\"status\":" + "\"fail\"" + "}";
+            if (data == null || ModelState.IsValid == false)
+            {
+                return resulterr;
+            }
+            String result = "{" + "\"status\":" + "\"success\"" + "}";
+            JObject jObject = JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(data));
+            try
+            {
+                string idBowlType = "", totalBowl = "0";
+                string idDrink = "", totalDrink = "0";
+                string idFoodAdd = "", totalFoodAdd = "0";
+                foreach (var list in jObject)
+                {
+                    String idFood = list.Value["listFoodID"].ToString();
+                    if (list.Value["listBowlTypeID"].ToString() != "")
+                    {
+                        JObject BowlType = JObject.Parse(list.Value["listBowlTypeID"].ToString());
+                        if (BowlType.Count > 0)
+                        {
+                            JObject BowlType0 = JObject.Parse(BowlType["0"].ToString());
+                            idBowlType = BowlType0["id"].ToString();
+                            totalBowl = BowlType0["total"].ToString();
+                        }
+                    }
+                    if (list.Value["listDrinkID"].ToString() != "")
+                    {
+                        JObject Drink = JObject.Parse(list.Value["listDrinkID"].ToString());
+                        if (Drink.Count > 0)
+                        {
+                            JObject Drink0 = JObject.Parse(Drink["0"].ToString());
+                            idDrink = Drink0["id"].ToString();
+                            totalDrink = Drink0["total"].ToString();
+                        }
+                    }
+                    if (list.Value["listFoodAddID"].ToString() != "")
+                    {
+                        JObject FoodAdd = JObject.Parse(list.Value["listFoodAddID"].ToString());
+                        if (FoodAdd.Count > 0)
+                        {
+                            JObject FoodAdd0 = JObject.Parse(FoodAdd["0"].ToString());
+                            idFoodAdd = FoodAdd0["id"].ToString();
+                            totalFoodAdd = FoodAdd0["total"].ToString();
+                        }
+                    }
+                    String quantityFood = list.Value["quantityFood"].ToString();
+                    String idTable = list.Value["idTable"].ToString();
+                    String note = list.Value["note"].ToString();
+                    Boolean is_TakeAway = Boolean.Parse(list.Value["is_TakeAwayDetail"].ToString());
+                    List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+                    Dictionary<string, object> row = new Dictionary<string, object>();
+                    row.Add("idTable", Convert.ToInt32(idTable));
+                    row.Add("idFood", Convert.ToInt32(idFood));
+                    if (idBowlType != "")
+                    {
+                        row.Add("idBowlType", Convert.ToInt32(idBowlType));
+                    }
+                    row.Add("idDrink", idDrink);
+                    row.Add("idAddFoodType", idFoodAdd);
+                    row.Add("Total_order_price", Convert.ToInt32(idFood) < 7 ? (Convert.ToDecimal(totalBowl) + Convert.ToDecimal(totalDrink) + Convert.ToDecimal(totalFoodAdd)) * Convert.ToInt32(quantityFood) : 30000 * Convert.ToInt32(quantityFood));
+                    row.Add("Quantity", Convert.ToInt32(quantityFood));
+                    row.Add("Note", note);
+                    row.Add("is_TakeAway", is_TakeAway);
+                    row.Add("idDelivery", 1);
+                    bool insert = ConnectionDB.SqlUpdate("OrderDetails", row, Convert.ToInt32(idOrderDetail));
+                    if (!insert)
+                    {
+                        return resulterr;
+                    }
+                    if (list.Value["listFoodTypeID"].ToString() != "" && list.Value["listFoodTypeID"].ToString().Length > 2)
+                    {
+                        ConnectionDB.SqlDelete("Type_OrderDetail", Convert.ToInt32(idOrderDetail), "idOrderDetail");
+                        JObject FoodType = JObject.Parse(list.Value["listFoodTypeID"].ToString());
+                        foreach (var listFT in FoodType)
+                        {
+                            string idFT = listFT.Value["id"].ToString();
+                            row.Clear();
+                            try
+                            {
+                                row.Add("idFoodType", idFT);
+                                row.Add("idOrderDetail", Convert.ToInt32(idOrderDetail));
+                                ConnectionDB.SqlInsert("Type_OrderDetail", row);
+                            }
+                            catch (Exception e) { }
+                        }
+                    }
+                    if (list.Value["listFoodExceptID"].ToString() != "" && list.Value["listFoodExceptID"].ToString().Length > 2)
+                    {
+                        ConnectionDB.SqlDelete("Except_OrderDetail", Convert.ToInt32(idOrderDetail), "idOrderDetail");
+                        JObject FoodExcept = JObject.Parse(list.Value["listFoodExceptID"].ToString());
+                        foreach (var listFE in FoodExcept)
+                        {
+                            string idFE = listFE.Value["id"].ToString();
+                            row.Clear();
+                            try
+                            {
+                                row.Add("idFoodExcept", idFE);
+                                row.Add("idOrderDetail", Convert.ToInt32(idOrderDetail));
+                                ConnectionDB.SqlInsert("Except_OrderDetail", row);
+                            }
+                            catch (Exception e) { }
+                        }
+                    }
+                }
+            }
+            catch (Exception e) { }
+
+            return result;
+
+        }
+
+        [Route("getOrderDetail/{idOrderDetail}")]
+        [AcceptVerbs("GET")]
+        public String getOrderDetail(string idOrderDetail)
+        {
+            List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+            Dictionary<string, string> row = new Dictionary<string, string>();
+            row.Add("id", idOrderDetail);
+            string SqlQuery = "SELECT * FROM dbo.OrderDetails (NOLOCK) WHERE id = @id";
+            rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                result.Add(rows[0]);
+            }
+            var jsonResult = new { result = result };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
+        }
+        [Route("getExceptOrderDetail/{idOrderDetail}")]
+        [AcceptVerbs("GET")]
+        public String getExceptOrderDetail(string idOrderDetail)
+        {
+            List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+            Dictionary<string, string> row = new Dictionary<string, string>();
+            row.Add("idOrderDetail", idOrderDetail);
+            string SqlQuery = "SELECT * FROM dbo.Except_OrderDetail (NOLOCK) WHERE idOrderDetail = @idOrderDetail";
+            rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                foreach(var rowResult in rows)
+                {
+                    result.Add(rowResult);
+                }                
+            }
+            var jsonResult = new { result = result };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
+        }
+        [Route("getTypeOrderDetail/{idOrderDetail}")]
+        [AcceptVerbs("GET")]
+        public String getTypeOrderDetail(string idOrderDetail)
+        {
+            List<Dictionary<string, string>> result = new List<Dictionary<string, string>>();
+            List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+            Dictionary<string, string> row = new Dictionary<string, string>();
+            row.Add("idOrderDetail", idOrderDetail);
+            string SqlQuery = "SELECT * FROM dbo.Type_OrderDetail (NOLOCK) WHERE idOrderDetail = @idOrderDetail";
+            rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                foreach (var rowResult in rows)
+                {
+                    result.Add(rowResult);
+                }
+            }
+            var jsonResult = new { result = result };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
+        }
+
+        [Route("postDeleteOrderDetail/{idOrder}/{idOrderDetail}")]
+        [AcceptVerbs("POST")]
+        public String postDeleteOrderDetail(string idOrder,string idOrderDetail)
+        {
+            string result = "{" + "\"status\":" + "\"fail\"" + "}";
+            try
+            {
+                bool delete = false;
+                List<Dictionary<string, string>> rows = new List<Dictionary<string, string>>();
+                Dictionary<string, string> row = new Dictionary<string, string>();
+                row.Add("idOrderDetail", idOrderDetail);
+                string SqlQuery = "Select * From dbo.Except_OrderDetail (nolock) where idOrderDetail = @idOrderDetail";
+                rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+                if(rows.Count > 0)
+                {
+                    delete = ConnectionDB.SqlDelete("Except_OrderDetail", Convert.ToInt32(idOrderDetail), "idOrderDetail");
+                    if(!delete)
+                    {
+                        return result;
+                    }
+                }
+                SqlQuery = "Select * from dbo.Type_OrderDetail (nolock) where idOrderDetail = @idOrderDetail";
+                rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+                if(rows.Count > 0)
+                {
+                    delete = ConnectionDB.SqlDelete("Type_OrderDetail", Convert.ToInt32(idOrderDetail), "idOrderDetail");
+                    if (!delete)
+                    {
+                        return result;
+                    }
+                }
+                delete = ConnectionDB.SqlDelete("OrderDetails", Convert.ToInt32(idOrderDetail));
+                if(!delete)
+                {
+                    return result;
+                }
+                row.Clear();
+                row.Add("idOrder", idOrder);
+                SqlQuery = "Select * from OrderDetails (nolock) where idOrder = @idOrder";
+                rows = ConnectionDB.SqlSelectString(SqlQuery, row);
+                if(rows.Count <= 0)
+                {
+                    delete = ConnectionDB.SqlDelete("dbo.[Order]", Convert.ToInt32(idOrder));
+                    if (!delete)
+                    {
+                        return result;
+                    }
+                }
+                result = "{" + "\"status\":" + "\"success\"" + "}";
+            }
+            catch (Exception e) { }
             return result;
         }
     }
