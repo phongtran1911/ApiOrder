@@ -146,10 +146,10 @@ namespace OrderAppAPITest.Controllers
             List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
             Dictionary<string, object> row = new Dictionary<string, object>();
             string idOrder = "",idTable = "",idFood = "",LoaiMon = "", KhongLay = "", Mon = "", LoaiTo = "", MonThem = "", Nuoc = "", SoLuong = "", Tien = "", GhiChu = "", NguoiDat = "", Ban = "", createDate = "", id = "", status = "", MangVe = "", idDelivery = "";
-            string sqlQuery = "SELECT c.id,d.Name AS Ban,e.Name AS Mon,bt.Name AS LoaiTo,t.Name AS MonThem, dr.Name AS Nuoc,c.Quantity AS SoLuong,c.Total_order_price AS Tien,c.Note AS GhiChu,b.Fullname AS NguoiDat,ft.Name AS LoaiMon, fe.Name AS KhongLay,ds.Description AS TrangThai,CASE WHEN c.is_TakeAway = 1 THEN N'Mang Về' ELSE N'Tại Bàn' END MangVe, CONVERT(NVARCHAR(10),a.createDate,103) + RIGHT(CONVERT(VARCHAR, a.createDate, 0), 7) createDate,c.idDelivery, c.idFood" +
+            string sqlQuery = "SELECT c.id,d.Name AS Ban,e.Name AS Mon,bt.Name AS LoaiTo,t.Name AS MonThem, dr.Name AS Nuoc,c.Quantity AS SoLuong,c.Total_order_price AS Tien,c.Note AS GhiChu,b.Fullname AS NguoiDat,ft.Name AS LoaiMon, fe.Name AS KhongLay,ds.Description AS TrangThai,CASE WHEN c.is_TakeAway = 1 THEN N'Mang Về' ELSE N'Tại Bàn' END MangVe, CONVERT(NVARCHAR(10),a.createDate,103) + ' ' + RIGHT(CONVERT(VARCHAR, a.createDate, 0), 7) createDate,c.idDelivery, c.idFood" +
                     ", c.idTable, a.id AS idOrder FROM dbo.[Order] (NOLOCK) a LEFT JOIN dbo.Users (NOLOCK) b ON b.id = a.id_User LEFT JOIN dbo.OrderDetails (NOLOCK) c ON c.idOrder = a.id LEFT JOIN dbo.Food_Table (NOLOCK) d ON d.id = c.idTable LEFT JOIN dbo.Food (NOLOCK) e ON e.id = c.idFood" +
                     " LEFT JOIN dbo.Food_Add_Type (NOLOCK) t ON t.id = c.idAddFoodType LEFT JOIN dbo.Drink (NOLOCK) dr ON dr.id = c.idDrink LEFT JOIN dbo.Bowl_Type (NOLOCK) bt ON bt.id = c.idBowlType LEFT JOIN dbo.Type_OrderDetail (NOLOCK) tod ON tod.idOrderDetail = c.id" +
-                    " LEFT JOIN dbo.Food_Type (NOLOCK) ft ON ft.id = tod.idFoodType LEFT JOIN dbo.Except_OrderDetail (NOLOCK) eod ON eod.idOrderDetail = c.id LEFT JOIN dbo.Food_Except (NOLOCK) fe ON fe.id = eod.idFoodExcept LEFT JOIN dbo.Delivery_status (NOLOCK) ds ON ds.id = c.idDelivery WHERE c.idDelivery IN (1,2) ORDER BY a.createDate DESC,c.idDelivery ASC";
+                    " LEFT JOIN dbo.Food_Type (NOLOCK) ft ON ft.id = tod.idFoodType LEFT JOIN dbo.Except_OrderDetail (NOLOCK) eod ON eod.idOrderDetail = c.id LEFT JOIN dbo.Food_Except (NOLOCK) fe ON fe.id = eod.idFoodExcept LEFT JOIN dbo.Delivery_status (NOLOCK) ds ON ds.id = c.idDelivery WHERE c.idDelivery IN (1,2) AND CAST(a.createDate AS Date) = CAST(GETDATE() AS DATE) ORDER BY a.createDate DESC,c.idDelivery ASC";
             rows = ConnectionDB.SqlSelect(sqlQuery, row);
             if (rows.Count > 0)
             {
@@ -165,23 +165,26 @@ namespace OrderAppAPITest.Controllers
                         {
                             for (int y = i; y < rows.Count; y++)
                             {
-                                if (rows[y]["id"].ToString() == rows[y + 1]["id"].ToString())
-                                {                                    
-                                    if (rows[y]["LoaiMon"].ToString() != rows[y + 1]["LoaiMon"].ToString())
-                                    {
-                                        LoaiMon += "," + rows[y + 1]["LoaiMon"].ToString();
-                                    }
-                                    if (rows[y]["KhongLay"].ToString() != rows[y + 1]["KhongLay"].ToString() && Array.IndexOf(arrKhongLay.ToArray(), rows[y + 1]["KhongLay"]) < 0)
-                                    {
-                                        arrKhongLay.Add(rows[y + 1]["KhongLay"].ToString());
-                                        KhongLay += "," + rows[y + 1]["KhongLay"].ToString();
-                                    }
-                                    i++;
-                                }
-                                else
+                                if(rows.Count - y > 1)
                                 {
-                                    break;
-                                }
+                                    if (rows[y]["id"].ToString() == rows[y + 1]["id"].ToString())
+                                    {
+                                        if (rows[y]["LoaiMon"].ToString() != rows[y + 1]["LoaiMon"].ToString())
+                                        {
+                                            LoaiMon += "," + rows[y + 1]["LoaiMon"].ToString();
+                                        }
+                                        if (rows[y]["KhongLay"].ToString() != rows[y + 1]["KhongLay"].ToString() && Array.IndexOf(arrKhongLay.ToArray(), rows[y + 1]["KhongLay"]) < 0)
+                                        {
+                                            arrKhongLay.Add(rows[y + 1]["KhongLay"].ToString());
+                                            KhongLay += "," + rows[y + 1]["KhongLay"].ToString();
+                                        }
+                                        i++;
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }                                
                             }
                         }
                         Mon = rows[i]["Mon"].ToString();
