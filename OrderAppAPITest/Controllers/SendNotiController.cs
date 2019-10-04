@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using OrderAppAPITest.Models;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -16,19 +17,25 @@ namespace OrderAppAPITest.Controllers
     public class SendNotiController : ApiController
     {
         [Route("SendMessage")]
-        [AcceptVerbs("POST")]
-        public IHttpActionResult SendMessage([FromBody] Object data)
+        [AcceptVerbs("GET")]
+        public IHttpActionResult SendMessage()
         {
-            String resulterr = "{" + "\"status\":" + "\"fail\"" + "}";
-            if (data == null || ModelState.IsValid == false)
+            List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+            Dictionary<string, object> row = new Dictionary<string, object>();
+            List<string> arrTokenDevice = new List<string>();
+            String SqlQuery = "SELECT token_Device FROM dbo.Users";
+            rows = ConnectionDB.SqlSelect(SqlQuery, row);
+            if(rows.Count > 0)
             {
-                return BadRequest();
+                foreach(var res in rows)
+                {
+                    string token = res["token_Device"] == DBNull.Value ? "" : res["token_Device"].ToString();
+                    arrTokenDevice.Add(token);                    
+                }
             }
-            JObject jObject = JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(data));
-            String tokenDevice = jObject["tokenDevice"] == null ? "" : jObject["tokenDevice"].ToString();
             var data1 = new
             {
-                to = tokenDevice,
+                registration_ids = arrTokenDevice,
                 data = new
                 {
                     message = "You have a new order",

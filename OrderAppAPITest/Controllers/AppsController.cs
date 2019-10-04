@@ -47,6 +47,47 @@ namespace OrderAppAPITest.Controllers
                 return resulterr;
             }
         }
+
+        [Route("postUpdateDeviceToken/{user_id}")]
+        [AcceptVerbs("POST")]
+        public String postUpdateDeviceToken([FromBody] Object data, string user_id)
+        {
+            String resulterr = "{" + "\"status\":" + "\"fail\"" + "}";
+            String result = "";
+            if (data == null || ModelState.IsValid == false)
+            {
+                return resulterr;
+            }
+            JObject jObject = JObject.Parse(Newtonsoft.Json.JsonConvert.SerializeObject(data));
+            //order infor
+            String token_Device = jObject["token_Device"] == null ? "" : jObject["token_Device"].ToString();
+            List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+            Dictionary<string, object> row = new Dictionary<string, object>();
+            row.Add("token_Device", token_Device);
+            row.Add("id", Convert.ToInt32(user_id));
+            string SqlQuery = "SELECT * FROM dbo.Users where token_Device=@token_Device and id=@id";
+            rows = ConnectionDB.SqlSelect(SqlQuery, row);
+            if (rows.Count > 0)
+            {
+                result = "{" + "\"status\":" + "\"success\"" + "}";
+                return result;
+            }
+            else
+            {
+                row.Clear();
+                row.Add("token_Device", token_Device);
+                bool update = ConnectionDB.SqlUpdate("Users", row, Convert.ToInt32(user_id));
+                if(update)
+                {
+                    result = "{" + "\"status\":" + "\"success\"" + "}";
+                }
+                else
+                {
+                    result = "{" + "\"status\":" + "\"fail\"" + "}";
+                }
+            }
+            return result;
+        }
         [Route("postCheck_Login")]
         [AcceptVerbs("POST")]
         public String postCheck_Login([FromBody] Object data)
