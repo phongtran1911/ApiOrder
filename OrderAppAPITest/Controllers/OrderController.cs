@@ -138,18 +138,18 @@ namespace OrderAppAPITest.Controllers
 
         }
 
-        [Route("getListOrdered")]
+        [Route("getListOrdered/{id_Order}")]
         [AcceptVerbs("GET")]
-        public string getListOrdered()
+        public string getListOrdered(string id_Order)
         {
             List<Dictionary<string, object>> lst = new List<Dictionary<string, object>>();
             List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
             Dictionary<string, object> row = new Dictionary<string, object>();
-            string idOrder = "",idTable = "",idFood = "",LoaiMon = "", KhongLay = "", Mon = "", LoaiTo = "", MonThem = "", Nuoc = "", SoLuong = "", Tien = "", GhiChu = "", NguoiDat = "", Ban = "", createDate = "", id = "", status = "", MangVe = "", idDelivery = "";
+            string idOrder = "", idTable = "", idFood = "", LoaiMon = "", KhongLay = "", Mon = "", LoaiTo = "", MonThem = "", Nuoc = "", SoLuong = "", Tien = "", GhiChu = "", NguoiDat = "", Ban = "", createDate = "", id = "", status = "", MangVe = "", idDelivery = "";
             string sqlQuery = "SELECT c.id,d.Name AS Ban,e.Name AS Mon,bt.Name AS LoaiTo,t.Name AS MonThem, dr.Name AS Nuoc,c.Quantity AS SoLuong,c.Total_order_price AS Tien,c.Note AS GhiChu,b.Fullname AS NguoiDat,ft.Name AS LoaiMon, fe.Name AS KhongLay,ds.Description AS TrangThai,CASE WHEN c.is_TakeAway = 1 THEN N'Mang Về' ELSE N'Tại Bàn' END MangVe, CONVERT(NVARCHAR(10),a.createDate,103) + ' ' + RIGHT(CONVERT(VARCHAR, a.createDate, 0), 7) createDate,c.idDelivery, c.idFood" +
                     ", c.idTable, a.id AS idOrder FROM dbo.[Order] (NOLOCK) a LEFT JOIN dbo.Users (NOLOCK) b ON b.id = a.id_User LEFT JOIN dbo.OrderDetails (NOLOCK) c ON c.idOrder = a.id LEFT JOIN dbo.Food_Table (NOLOCK) d ON d.id = c.idTable LEFT JOIN dbo.Food (NOLOCK) e ON e.id = c.idFood" +
                     " LEFT JOIN dbo.Food_Add_Type (NOLOCK) t ON t.id = c.idAddFoodType LEFT JOIN dbo.Drink (NOLOCK) dr ON dr.id = c.idDrink LEFT JOIN dbo.Bowl_Type (NOLOCK) bt ON bt.id = c.idBowlType LEFT JOIN dbo.Type_OrderDetail (NOLOCK) tod ON tod.idOrderDetail = c.id" +
-                    " LEFT JOIN dbo.Food_Type (NOLOCK) ft ON ft.id = tod.idFoodType LEFT JOIN dbo.Except_OrderDetail (NOLOCK) eod ON eod.idOrderDetail = c.id LEFT JOIN dbo.Food_Except (NOLOCK) fe ON fe.id = eod.idFoodExcept LEFT JOIN dbo.Delivery_status (NOLOCK) ds ON ds.id = c.idDelivery WHERE c.idDelivery IN (1,2) AND CAST(a.createDate AS Date) = CAST(GETDATE() AS DATE) ORDER BY a.createDate DESC,c.idDelivery ASC";
+                    " LEFT JOIN dbo.Food_Type (NOLOCK) ft ON ft.id = tod.idFoodType LEFT JOIN dbo.Except_OrderDetail (NOLOCK) eod ON eod.idOrderDetail = c.id LEFT JOIN dbo.Food_Except (NOLOCK) fe ON fe.id = eod.idFoodExcept LEFT JOIN dbo.Delivery_status (NOLOCK) ds ON ds.id = c.idDelivery WHERE c.idDelivery IN (1,2) AND a.id = " + id_Order + " ORDER BY c.idDelivery ASC,a.createDate ASC";
             rows = ConnectionDB.SqlSelect(sqlQuery, row);
             if (rows.Count > 0)
             {
@@ -165,7 +165,7 @@ namespace OrderAppAPITest.Controllers
                         {
                             for (int y = i; y < rows.Count; y++)
                             {
-                                if(rows.Count - y > 1)
+                                if (rows.Count - y > 1)
                                 {
                                     if (rows[y]["id"].ToString() == rows[y + 1]["id"].ToString())
                                     {
@@ -184,7 +184,7 @@ namespace OrderAppAPITest.Controllers
                                     {
                                         break;
                                     }
-                                }                                
+                                }
                             }
                         }
                         Mon = rows[i]["Mon"].ToString();
@@ -279,7 +279,93 @@ namespace OrderAppAPITest.Controllers
             var result = new { status = "success", list = lst };
             return Newtonsoft.Json.JsonConvert.SerializeObject(result);
         }
-
+        [Route("getTableOrdered")]
+        [AcceptVerbs("GET")]
+        public string getTableOrdered()
+        {
+            List<Dictionary<string, object>> lst = new List<Dictionary<string, object>>();
+            List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+            Dictionary<string, object> row = new Dictionary<string, object>();
+            string Mon = "", Ban = "", createDate = "", id = "", status = "";
+            int TongTien = 0;
+            string sqlQuery = @"SELECT d.Name AS Ban,CONVERT(VARCHAR(2),b.Quantity) + ' ' + e.Name AS Mon, a.id, de.Description AS TrangThai,
+                               CONVERT(NVARCHAR(10),a.createDate,103) + ' ' + RIGHT(CONVERT(VARCHAR, a.createDate, 0), 7) createDate, b.Total_order_price as TongTien
+                               FROM dbo.[Order] a (NOLOCK)
+                               LEFT JOIN dbo.OrderDetails b (NOLOCK) ON b.idOrder = a.id
+                               LEFT JOIN dbo.Food_Table (NOLOCK) d ON d.id = b.idTable
+                               LEFT JOIN dbo.Food (NOLOCK) e  ON e.id = b.idFood
+                               LEFT JOIN dbo.Delivery_status de ON de.id = a.id_Delivery
+                               WHERE CAST(a.createDate AS Date) = CAST(GETDATE() AS DATE)
+                               ORDER BY a.id_Delivery ASC,a.createDate ASC
+                ";
+            rows = ConnectionDB.SqlSelect(sqlQuery, row);
+            if (rows.Count > 0)
+            {
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    if (rows.Count - i > 1)
+                    {
+                        TongTien = Convert.ToInt32(rows[i]["TongTien"] == null ? "0" : rows[i]["TongTien"].ToString());
+                        Mon = rows[i]["Mon"] == null ? "" : rows[i]["Mon"].ToString();
+                        if (rows[i]["id"].ToString() == rows[i + 1]["id"].ToString())
+                        {
+                            for (int y = i; y < rows.Count; y++)
+                            {
+                                if (rows.Count - y > 1)
+                                {
+                                    if (rows[y]["id"].ToString() == rows[y + 1]["id"].ToString())
+                                    {
+                                        Mon += "," + rows[y + 1]["Mon"].ToString();
+                                        TongTien += Convert.ToInt32(rows[y + 1]["TongTien"].ToString());
+                                        i++;
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        Ban = rows[i]["Ban"].ToString();
+                        id = rows[i]["id"].ToString();
+                        status = rows[i]["TrangThai"].ToString();
+                        createDate = rows[i]["createDate"].ToString();
+                        Dictionary<string, object> dic = new Dictionary<string, object>();
+                        dic.Add("id", int.Parse(id));
+                        dic.Add("Mon", Mon);
+                        dic.Add("Ban", Ban);
+                        dic.Add("NgayTao", createDate);
+                        dic.Add("TrangThai", status);
+                        dic.Add("TongTien", TongTien);
+                        lst.Add(dic);
+                    }
+                    else
+                    {
+                        TongTien = Convert.ToInt32(rows[i]["TongTien"] == null ? "0" : rows[i]["TongTien"].ToString());
+                        Mon = rows[i]["Mon"] == null ? "" : rows[i]["Mon"].ToString();
+                        Ban = rows[i]["Ban"].ToString();
+                        id = rows[i]["id"].ToString();
+                        status = rows[i]["TrangThai"].ToString();
+                        createDate = rows[i]["createDate"].ToString();
+                        Dictionary<string, object> dic = new Dictionary<string, object>();
+                        dic.Add("id", int.Parse(id));
+                        dic.Add("Mon", Mon);
+                        dic.Add("Ban", Ban);
+                        dic.Add("NgayTao", createDate);
+                        dic.Add("TrangThai", status);
+                        dic.Add("TongTien", TongTien);
+                        lst.Add(dic);
+                    }
+                }
+            }
+            else
+            {
+                var resulterr = new { status = "Empty", list = "" };
+                return Newtonsoft.Json.JsonConvert.SerializeObject(resulterr);
+            }
+            var result = new { status = "success", list = lst };
+            return Newtonsoft.Json.JsonConvert.SerializeObject(result);
+        }
         [Route("postUpdateStatusOrder/{id_OrderDetail}")]
         [AcceptVerbs("POST")]
         public string postUpdateStatusOrder(string id_OrderDetail)
@@ -446,10 +532,10 @@ namespace OrderAppAPITest.Controllers
             rows = ConnectionDB.SqlSelectString(SqlQuery, row);
             if (rows.Count > 0)
             {
-                foreach(var rowResult in rows)
+                foreach (var rowResult in rows)
                 {
                     result.Add(rowResult);
-                }                
+                }
             }
             var jsonResult = new { result = result };
             return Newtonsoft.Json.JsonConvert.SerializeObject(jsonResult);
@@ -477,7 +563,7 @@ namespace OrderAppAPITest.Controllers
 
         [Route("postDeleteOrderDetail/{idOrder}/{idOrderDetail}")]
         [AcceptVerbs("POST")]
-        public String postDeleteOrderDetail(string idOrder,string idOrderDetail)
+        public String postDeleteOrderDetail(string idOrder, string idOrderDetail)
         {
             string result = "{" + "\"status\":" + "\"fail\"" + "}";
             try
@@ -488,17 +574,17 @@ namespace OrderAppAPITest.Controllers
                 row.Add("idOrderDetail", idOrderDetail);
                 string SqlQuery = "Select * From dbo.Except_OrderDetail (nolock) where idOrderDetail = @idOrderDetail";
                 rows = ConnectionDB.SqlSelectString(SqlQuery, row);
-                if(rows.Count > 0)
+                if (rows.Count > 0)
                 {
                     delete = ConnectionDB.SqlDelete("Except_OrderDetail", Convert.ToInt32(idOrderDetail), "idOrderDetail");
-                    if(!delete)
+                    if (!delete)
                     {
                         return result;
                     }
                 }
                 SqlQuery = "Select * from dbo.Type_OrderDetail (nolock) where idOrderDetail = @idOrderDetail";
                 rows = ConnectionDB.SqlSelectString(SqlQuery, row);
-                if(rows.Count > 0)
+                if (rows.Count > 0)
                 {
                     delete = ConnectionDB.SqlDelete("Type_OrderDetail", Convert.ToInt32(idOrderDetail), "idOrderDetail");
                     if (!delete)
@@ -507,7 +593,7 @@ namespace OrderAppAPITest.Controllers
                     }
                 }
                 delete = ConnectionDB.SqlDelete("OrderDetails", Convert.ToInt32(idOrderDetail));
-                if(!delete)
+                if (!delete)
                 {
                     return result;
                 }
@@ -515,7 +601,7 @@ namespace OrderAppAPITest.Controllers
                 row.Add("idOrder", idOrder);
                 SqlQuery = "Select * from OrderDetails (nolock) where idOrder = @idOrder";
                 rows = ConnectionDB.SqlSelectString(SqlQuery, row);
-                if(rows.Count <= 0)
+                if (rows.Count <= 0)
                 {
                     delete = ConnectionDB.SqlDelete("dbo.[Order]", Convert.ToInt32(idOrder));
                     if (!delete)
@@ -526,6 +612,41 @@ namespace OrderAppAPITest.Controllers
                 result = "{" + "\"status\":" + "\"success\"" + "}";
             }
             catch (Exception e) { }
+            return result;
+        }
+
+        [Route("postUpdateStatusMainOrder/{idOrder}")]
+        [AcceptVerbs("POST")]
+        public String postUpdateStatusMainOrder(string idOrder)
+        {
+            string result = "";
+            try
+            {
+                string SqlQuery = "SELECT * FROM dbo.OrderDetails (NOLOCK) WHERE idDelivery = 1 AND idOrder = " + idOrder;
+                List<Dictionary<string, object>> rows = new List<Dictionary<string, object>>();
+                Dictionary<string, object> row = new Dictionary<string, object>();
+                rows = ConnectionDB.SqlSelect(SqlQuery, row);
+                if(rows.Count > 0)
+                {
+                    result = "{" + "\"status\":" + "\"alive\"" + "}";
+                    return result;
+                }
+                else
+                {
+                    result = "{" + "\"status\":" + "\"success\"" + "}";
+                    Dictionary<String, Object> dic = new Dictionary<String, Object>();
+                    dic.Add("id_Delivery", 2);
+                    bool update = ConnectionDB.SqlUpdate("dbo.[Order]", dic, Convert.ToInt32(idOrder));
+                    if (!update)
+                    {
+                        result = "{" + "\"status\":" + "\"fail\"" + "}";
+                    }
+                }                
+            }
+            catch (Exception e)
+            {
+                return e.Message;
+            }
             return result;
         }
     }
